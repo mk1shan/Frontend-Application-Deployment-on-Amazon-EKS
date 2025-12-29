@@ -1,0 +1,6 @@
+
+{
+  "name": "Astro-MERN Simulator",
+  "description": "A standalone space survival game featuring a simulated MERN stack (MongoDB, Express, React, Node) architecture running entirely in-browser.",
+  "requestFramePermissions": []
+}

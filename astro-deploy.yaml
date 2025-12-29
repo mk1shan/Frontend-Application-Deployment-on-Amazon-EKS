@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: astro-mern-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: astro-mern-deployment
+  namespace: astro-mern-ns
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: astro-mern
+  template:
+    metadata:
+      labels:
+        app: astro-mern
+    spec:
+      containers:
+      - name: simulator-container
+        image: mudipa/my-app:v4  
+        ports:
+        - containerPort: 80      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: astro-mern-service
+  namespace: astro-mern-ns
+spec:
+  selector:
+    app: astro-mern
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80         
+  type: ClusterIP                
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: astro-mern-ingress
+  namespace: astro-mern-ns
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip  
+   
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: astro-mern-service
+                port:
+                  number: 80
