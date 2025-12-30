@@ -68,6 +68,7 @@ Resolved **AccessDenied** errors by updating IAM policy versions to allow proper
 ---
 
 
+<<<<<<< HEAD
 
 ## 🧹 Cost Management
 
@@ -75,4 +76,9 @@ The cluster was deleted immediately after validation to avoid AWS charges:
 
 ```bash
 eksctl delete cluster --name mern-cluster
+=======
+# --- CLEANUP (COST MANAGEMENT) ---
+# Run this only when you want to delete everything
+# eksctl delete cluster --name mern-cluster
+>>>>>>> d4139c698d369dc377e316984e74a9cd837dec3b
 
