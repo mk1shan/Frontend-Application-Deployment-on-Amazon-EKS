@@ -67,7 +67,9 @@ Resolved **AccessDenied** errors by updating IAM policy versions to allow proper
 
 ---
 
-Phase 1: Cluster & Infrastructure Setup
+#############################################
+# Phase 1: Cluster & Infrastructure Setup
+#############################################
 
 # 1. Configure AWS CLI
 aws configure
@@ -81,13 +83,18 @@ aws eks update-kubeconfig --name mern-cluster --region us-east-1
 # 4. Create a dedicated namespace for the MERN application
 kubectl create namespace mern-app
 
-Phase 2: Fargate Profiles
+
+#############################################
+# Phase 2: Fargate Profiles
+#############################################
 
 # 5. Create Fargate Profile for your MERN app namespace
 eksctl create fargateprofile --cluster mern-cluster --name mern-app-profile --namespace mern-app
 
 
-Phase 3: Identity & ALB Security
+#############################################
+# Phase 3: Identity & ALB Security
+#############################################
 
 # 6. Associate OIDC Provider
 eksctl utils associate-iam-oidc-provider --cluster mern-cluster --approve
@@ -109,7 +116,10 @@ eksctl create iamserviceaccount \
   --attach-policy-arn=arn:aws:iam::<MY_ACCOUNT_ID>:policy/MERN-ALBController-Policy \
   --approve
 
-Phase 4: Installing the ALB Controller
+
+#############################################
+# Phase 4: Installing the ALB Controller
+#############################################
 
 # 9. Install Helm and add EKS charts
 helm repo add eks https://aws.github.io/eks-charts
@@ -126,7 +136,9 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   --set vpcId=<MY_VPC_ID>
 
 
-  Phase 5: Deploy REACT & Verification
+#############################################
+# Phase 5: Deploy REACT & Verification
+#############################################
 
 # 11. Deploy my REACT manifests
 kubectl apply -f mern-deployment.yaml -n mern-app
@@ -135,11 +147,11 @@ kubectl apply -f mern-deployment.yaml -n mern-app
 kubectl get ingress -n mern-app
 
 
+#############################################
+# Cost Management
+#############################################
 
-## 🧹 Cost Management
-
-The cluster was deleted immediately after validation to avoid AWS charges:
-
-```bash
+# The cluster was deleted immediately after validation to avoid AWS charges
 eksctl delete cluster --name mern-cluster
+
 
