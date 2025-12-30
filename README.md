@@ -67,91 +67,76 @@ Resolved **AccessDenied** errors by updating IAM policy versions to allow proper
 
 ---
 
-Phase 1: Cluster & Infrastructure Setup
-
-# 1. Configure AWS CLI
-```bash
+# --- PHASE 1: CLUSTER SETUP ---
+# Configure your credentials
 aws configure
 
-# 2. Create the MERN EKS Cluster on Fargate
-```bash
+# Create the EKS Cluster on Fargate
 eksctl create cluster --name mern-cluster --region us-east-1 --fargate
 
-# 3. Update Kubeconfig to access the cluster
-```bash
+# Update local kubeconfig
 aws eks update-kubeconfig --name mern-cluster --region us-east-1
 
-# 4. Create a dedicated namespace for the MERN application
-```bash
+# Create the application namespace
 kubectl create namespace mern-app
 
-Phase 2: Fargate Profiles
 
-# 5. Create Fargate Profile for your MERN app namespace
-```bash
-eksctl create fargateprofile --cluster mern-cluster --name mern-app-profile --namespace mern-app
+# --- PHASE 2: FARGATE PROFILES ---
+# Allow the mern-app namespace to run on Fargate
+eksctl create fargateprofile \
+    --cluster mern-cluster \
+    --name mern-app-profile \
+    --namespace mern-app
 
 
-Phase 3: Identity & ALB Security
-
-# 6. Associate OIDC Provider
-```bash
+# --- PHASE 3: IDENTITY & IAM SECURITY ---
+# Enable IAM roles for Service Accounts
 eksctl utils associate-iam-oidc-provider --cluster mern-cluster --approve
 
-# 7. Setup IAM Policy for the ALB Controller
-```bash
+# Download and create the ALB Controller Policy
 curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
 
 aws iam create-policy \
     --policy-name MERN-ALBController-Policy \
     --policy-document file://iam_policy.json
 
-# 8. Create IAM Service Account (IRSA)
-# Replace <MY_ACCOUNT_ID> with my actual AWS Account ID
-```bash
+# Create the Service Account (Replace <YOUR_ACCOUNT_ID>)
 eksctl create iamserviceaccount \
   --cluster=mern-cluster \
   --namespace=kube-system \
   --name=aws-load-balancer-controller \
   --role-name MERN-ALB-Controller-Role \
-  --attach-policy-arn=arn:aws:iam::<MY_ACCOUNT_ID>:policy/MERN-ALBController-Policy \
+  --attach-policy-arn=arn:aws:iam::<YOUR_ACCOUNT_ID>:policy/MERN-ALBController-Policy \
   --approve
 
-Phase 4: Installing the ALB Controller
 
-# 9. Install Helm and add EKS charts
-```bash
+# --- PHASE 4: ALB CONTROLLER INSTALLATION ---
+# Add Helm charts
 helm repo add eks https://aws.github.io/eks-charts
 helm repo update eks
 
-# 10. Install the Controller
-# Get my VPC ID: aws eks describe-cluster --name mern-cluster --query "cluster.resourcesVpcConfig.vpcId" --output text
-```bash
+# Get VPC ID and install the Controller
+# Replace <YOUR_VPC_ID> with the output of:
+# aws eks describe-cluster --name mern-cluster --query "cluster.resourcesVpcConfig.vpcId" --output text
+
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
   --set clusterName=mern-cluster \
   --set serviceAccount.create=false \
   --set serviceAccount.name=aws-load-balancer-controller \
   --set region=us-east-1 \
-  --set vpcId=<MY_VPC_ID>
+  --set vpcId=<YOUR_VPC_ID>
 
 
-  Phase 5: Deploy REACT & Verification
-
-# 11. Deploy my REACT manifests
-```bash
+# --- PHASE 5: DEPLOY & VERIFY ---
+# Apply your Kubernetes manifests
 kubectl apply -f mern-deployment.yaml -n mern-app
 
-# 12. Check status and get my public URL (ADDRESS)
-```bash
+# Wait for the Load Balancer to provide a DNS address
 kubectl get ingress -n mern-app
 
 
-
-## 🧹 Cost Management
-
-The cluster was deleted immediately after validation to avoid AWS charges:
-
-```bash
-eksctl delete cluster --name mern-cluster
+# --- CLEANUP (COST MANAGEMENT) ---
+# Run this only when you want to delete everything
+# eksctl delete cluster --name mern-cluster
 
